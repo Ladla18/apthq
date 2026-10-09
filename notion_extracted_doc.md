@@ -172,3 +172,104 @@ Empty configs, duplicate brokerName, or empty config → 400.
 
 ## Errors
 
+
+# Partner Tickets API
+
+Base: `https://api.chat.apt.trading/api/partner/tickets`
+
+Auth: No bearer token.
+
+Request body requirements (all partner routes):
+
+- `user` must be `"partner"`
+- `brokers` must be a non-empty array of broker ids
+- Only tickets whose `broker` is in `brokers` are accessible
+- Accessing a ticket outside `brokers` returns `403`
+
+---
+
+
+## 1. POST /api/partner/tickets?page=1&limit=20
+
+List partner-visible tickets.
+
+Query params match dashboard list filters:
+
+- `status`
+- `type`
+- `unread_for`
+- date range params
+- `page`
+- `limit`
+
+Response shape is the same as `GET /api/tickets`.
+
+```Bash
+curl --location 'https://api.chat.apt.trading/api/partner/tickets?page=1&limit=20' \
+  --header 'Content-Type: application/json' \
+  --data '{
+    "user": "partner",
+    "brokers": ["tradebulls", "other_broker"]
+  }'
+```
+
+---
+
+
+## 2. POST /api/partner/tickets/:ticketId
+
+Get partner-visible ticket detail.
+
+Response shape:
+
+```JSON
+{
+  "ticket": { "...": "..." },
+  "messages": [{ "...": "..." }]
+}
+```
+
+```Bash
+curl --location 'https://api.chat.apt.trading/api/partner/tickets/TICKET_ID' \
+  --header 'Content-Type: application/json' \
+  --data '{
+    "user": "partner",
+    "brokers": ["tradebulls", "other_broker"]
+  }'
+```
+
+---
+
+
+## 3. POST /api/partner/tickets/:ticketId/messages
+
+Partner reply on an allowed ticket.
+
+Behavior:
+
+- Message is saved as support-side reply
+- End user sees it in the same thread
+- Media/file validation rules are the same as support replies
+
+### JSON body (text-only)
+
+```Bash
+curl --location 'https://api.chat.apt.trading/api/partner/tickets/TICKET_ID/messages' \
+  --header 'Content-Type: application/json' \
+  --data '{
+    "user": "partner",
+    "brokers": ["tradebulls", "other_broker"],
+    "content": "We are looking into this."
+  }'
+```
+
+### Multipart form-data (with files)
+
+```Bash
+curl --location 'https://api.chat.apt.trading/api/partner/tickets/TICKET_ID/messages' \
+  --form 'user=partner' \
+  --form 'brokers=["tradebulls","other_broker"]' \
+  --form 'content=Screenshot attached' \
+  --form 'files=@/path/shot.png'
+```
+

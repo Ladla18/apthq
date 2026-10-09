@@ -8,6 +8,7 @@ export type MainTab =
   | 'healthcheckv3'
   | 'debugstrategy'
   | 'hqops'
+  | 'chattickets'
 export type TechTab = 'tokens' | 'servers'
 export type PeriodPreset = '7d' | '30d' | '90d' | 'ytd'
 export type ServerFilter = 'all' | 'stale' | 'drift'

@@ -16,10 +16,11 @@ Open the URL Vite prints (usually `http://localhost:5173`).
 
 | Variable | Description |
 |----------|-------------|
-| `VITE_API_BASE` | Leave **empty** on Vercel. Same-origin `/api`, `/health`, and `/v2` are routed by `vercel.json`. |
-| `VITE_API_PROXY_TARGET` | Analytics Lambda URL for local dev proxy (`/api`, `/health`). |
+| `VITE_API_BASE` | Direct API base URL for analytics/health endpoints (no proxy). |
+| `VITE_API_PROXY_TARGET` | Optional Vite dev proxy target (only if you explicitly enable proxy-based flows). |
 | `VITE_BRAND_API_PROXY_TARGET` | Brand config backend for local dev (`/v2`). Default: `http://localhost:3000`. |
 | `VITE_BRAND_CONFIG_TOKEN` | Optional default token for Brand Config tab. |
+| `VITE_CHAT_API_BASE` | Partner chat/ticket host (default: `https://api.chat.apt.trading`). |
 
 ### Two backends
 
@@ -35,7 +36,7 @@ npm run server   # brand config on :3000
 npm run dev      # frontend on :5173
 ```
 
-**Vercel:** deploy this repo as-is. Set `VITE_API_BASE` to empty (or remove it). Do **not** point `VITE_API_BASE` at the Lambda URL — that breaks Brand Config with 404.
+**Vercel:** deploy with `VITE_API_BASE` set to your upstream host for direct API calls.
 
 ## Scripts
 

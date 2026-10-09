@@ -1,32 +1,3 @@
 {
-  "rewrites": [
-    {
-      "source": "/api/v1/:path*",
-      "destination": "https://2ky37g6kcgsboe6xos5ida6ohe0rnwnk.lambda-url.ap-south-1.on.aws/api/v1/:path*"
-    },
-    {
-      "source": "/api/v3/:path*",
-      "destination": "https://2ky37g6kcgsboe6xos5ida6ohe0rnwnk.lambda-url.ap-south-1.on.aws/api/v3/:path*"
-    },
-    {
-      "source": "/health",
-      "destination": "https://2ky37g6kcgsboe6xos5ida6ohe0rnwnk.lambda-url.ap-south-1.on.aws/health"
-    },
-    {
-      "source": "/v2/users/login",
-      "destination": "/api/v2/users/login"
-    },
-    {
-      "source": "/v2/aggregate/config",
-      "destination": "/api/v2/aggregate/config"
-    },
-    {
-      "source": "/v2/aggregate/all_configs",
-      "destination": "/api/v2/aggregate/all_configs"
-    },
-    {
-      "source": "/v3/:path*",
-      "destination": "https://api.aptdemo.atoms.trade/v3/:path*"
-    }
-  ]
+  "rewrites": []
 }

@@ -188,6 +188,7 @@ export function SubTabs() {
     { id: 'healthcheckv3', label: 'Health Check v3' },
     { id: 'debugstrategy', label: 'Debug Strategy' },
     { id: 'hqops', label: 'HQ Ops' },
+    { id: 'chattickets', label: 'Chat Tickets' },
   ]
 
   const onKeyDown = (e: ReactKeyboardEvent, index: number) => {

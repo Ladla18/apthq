@@ -38,6 +38,11 @@ const HqOpsPanel = lazy(() =>
     default: m.HqOpsPanel,
   })),
 )
+const ChatTicketsPanel = lazy(() =>
+  import('./components/panels/ChatTicketsPanel').then((m) => ({
+    default: m.ChatTicketsPanel,
+  })),
+)
 
 const queryClient = new QueryClient({
   defaultOptions: {
@@ -89,6 +94,11 @@ function TabPanel() {
     hqops: (
       <ErrorBoundary label="HQ Ops">
         <HqOpsPanel />
+      </ErrorBoundary>
+    ),
+    chattickets: (
+      <ErrorBoundary label="Chat Tickets">
+        <ChatTicketsPanel />
       </ErrorBoundary>
     ),
   }[activeTab]

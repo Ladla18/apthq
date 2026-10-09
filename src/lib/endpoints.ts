@@ -1,6 +1,6 @@
 /**
  * API route definitions — mirrors apt_hq_dashboard.js
- * Base URL: VITE_API_BASE (empty in dev → Vite proxy) or Lambda URL in production
+ * Base URL: VITE_API_BASE (direct upstream host; no proxy required)
  */
 
 export const API_ROUTES = {
