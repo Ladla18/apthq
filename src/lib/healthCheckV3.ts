@@ -14,13 +14,13 @@ export { resolveHealthV3Brokers, HEALTH_V3_ALL_BROKERS } from './aptdemoBrokers'
 
 export const HEALTH_V3_POSITION_SERVICE_PATH = '/v3/healthCheck/position-service'
 
-export const HEALTH_V3_DEFAULT_ORIGIN = 'https://api.aptdemo.atoms.trade'
+export const HEALTH_V3_DEFAULT_ORIGIN = 'https://api.webtest.apt.trading'
 
 export { DEFAULT_HEALTH_V3_BROKERS } from './aptdemoBrokers'
 
-/** Client path — proxied in dev/Vercel to api.aptdemo.atoms.trade */
+/** Direct aptdemo host. Empty env must not fall back to the Vercel origin. */
 export const HEALTH_V3_API_BASE =
-  import.meta.env.VITE_HEALTH_V3_API_BASE?.trim() ?? ''
+  import.meta.env.VITE_HEALTH_V3_API_BASE?.trim() || HEALTH_V3_DEFAULT_ORIGIN
 
 export function healthV3AptdemoPath(broker: BrokerKey = 'all'): string {
   if (!broker || broker === 'all') return HEALTH_V3_POSITION_SERVICE_PATH
@@ -38,7 +38,7 @@ export function healthV3FullUrl(broker: BrokerKey = 'all'): string {
   return `${HEALTH_V3_DEFAULT_ORIGIN}${healthV3AptdemoPath(broker)}`
 }
 
-/** Map a pasted absolute aptdemo URL to same-origin path for proxy fetch. */
+/** Keep fetches on the original aptdemo host, never the dashboard origin. */
 export function resolveHealthV3FetchUrl(input: string): string {
   const trimmed = input.trim()
   if (!trimmed) return trimmed

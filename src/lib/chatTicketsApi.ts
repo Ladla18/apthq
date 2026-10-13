@@ -103,6 +103,28 @@ export async function replyToPartnerTicket(
   return payload
 }
 
+export async function updatePartnerTicketStatus(
+  ticketId: string,
+  body: PartnerBody & { status: string },
+): Promise<unknown> {
+  const res = await fetch(
+    `${PARTNER_CHAT_API_BASE}/api/partner/tickets/${encodeURIComponent(ticketId)}/status`,
+    {
+      method: 'POST',
+      headers: { 'Content-Type': 'application/json' },
+      body: JSON.stringify({
+        user: body.user,
+        brokers: body.brokers,
+        status: body.status,
+      }),
+    },
+  )
+
+  const payload = await parseJsonSafe(res)
+  if (!res.ok) throw new Error(toErrorMessage(res.status, payload))
+  return payload
+}
+
 function buildReplyFormData(body: PartnerBody & { content: string; files?: File[] }): FormData {
   const form = new FormData()
   form.append('user', body.user)

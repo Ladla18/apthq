@@ -25,7 +25,7 @@ export function debugStrategyFullUrl(strategyId: string, sessionId: string): str
 }
 
 /** aptdemo reference URL (same path shape, different host). */
-export const DEBUG_STRATEGY_APTDEMO_ORIGIN = 'https://api.aptdemo.atoms.trade'
+export const DEBUG_STRATEGY_APTDEMO_ORIGIN = 'https://api.webtest.apt.trading'
 
 export function debugStrategyAptdemoPath(strategyId: string, sessionId: string): string {
   const sid = encodeURIComponent(strategyId.trim())
@@ -37,9 +37,10 @@ export function debugStrategyAptdemoFullUrl(strategyId: string, sessionId: strin
   return `${DEBUG_STRATEGY_APTDEMO_ORIGIN}${debugStrategyAptdemoPath(strategyId, sessionId)}`
 }
 
-const HEALTH_V3_API_BASE = import.meta.env.VITE_HEALTH_V3_API_BASE?.trim() ?? ''
+const HEALTH_V3_API_BASE =
+  import.meta.env.VITE_HEALTH_V3_API_BASE?.trim() || DEBUG_STRATEGY_APTDEMO_ORIGIN
 
-/** Same-origin path proxied to api.aptdemo.atoms.trade in dev/Vercel. */
+/** Direct aptdemo URL. Empty env must not fall back to the Vercel origin. */
 export function debugStrategyAptdemoUrl(strategyId: string, sessionId: string): string {
   const base = HEALTH_V3_API_BASE.replace(/\/$/, '')
   const path = debugStrategyAptdemoPath(strategyId, sessionId)

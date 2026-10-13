@@ -273,3 +273,20 @@ curl --location 'https://api.chat.apt.trading/api/partner/tickets/TICKET_ID/mess
   --form 'files=@/path/shot.png'
 ```
 
+---
+
+
+## 4. POST /api/partner/tickets/:ticketId/status
+
+Update status for an allowed partner ticket.
+
+```Bash
+curl --location 'https://api.chat.apt.trading/api/partner/tickets/TICKET_ID/status' \
+  --header 'Content-Type: application/json' \
+  --data '{
+    "user": "partner",
+    "brokers": ["tradebulls", "other_broker"],
+    "status": "in_progress"
+  }'
+```
+

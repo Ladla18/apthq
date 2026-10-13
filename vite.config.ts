@@ -7,7 +7,7 @@ const DEFAULT_API_PROXY_TARGET =
 
 const DEFAULT_V2_PROXY_TARGET = 'https://api.aptdemo.atoms.trade'
 
-const DEFAULT_HEALTH_V3_PROXY_TARGET = 'https://api.aptdemo.atoms.trade'
+const DEFAULT_HEALTH_V3_PROXY_TARGET = 'https://api.webtest.apt.trading'
 
 function parseSessionTokenFromSetCookie(
   setCookie: string | string[] | undefined,

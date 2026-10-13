@@ -31,13 +31,13 @@ describe('debugStrategyApi', () => {
 
   it('builds full aptdemo URL for copy/paste', () => {
     expect(debugStrategyAptdemoFullUrl('strategy-1', 'session-2')).toBe(
-      'https://api.aptdemo.atoms.trade/v3/strategies/strategy-1/session-2',
+      'https://api.webtest.apt.trading/v3/strategies/strategy-1/session-2',
     )
   })
 
-  it('builds same-origin aptdemo fetch path', () => {
+  it('builds direct aptdemo fetch URL', () => {
     expect(debugStrategyAptdemoUrl('strategy-1', 'session-2')).toBe(
-      '/v3/strategies/strategy-1/session-2',
+      'https://api.webtest.apt.trading/v3/strategies/strategy-1/session-2',
     )
   })
 

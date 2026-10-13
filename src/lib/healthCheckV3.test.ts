@@ -48,16 +48,18 @@ describe('healthCheckV3', () => {
 
   it('builds full aptdemo URL for copy/paste', () => {
     expect(healthV3FullUrl('bajaj')).toBe(
-      'https://api.aptdemo.atoms.trade/v3/healthCheck/position-service?broker=bajaj',
+      'https://api.webtest.apt.trading/v3/healthCheck/position-service?broker=bajaj',
     )
   })
 
-  it('resolves absolute aptdemo URL to same-origin path', () => {
+  it('keeps absolute aptdemo URL for direct fetch', () => {
     expect(
       resolveHealthV3FetchUrl(
-        'https://api.aptdemo.atoms.trade/v3/healthCheck/position-service?broker=bajaj',
+        'https://api.webtest.apt.trading/v3/healthCheck/position-service?broker=bajaj',
       ),
-    ).toBe('/v3/healthCheck/position-service?broker=bajaj')
+    ).toBe(
+      'https://api.webtest.apt.trading/v3/healthCheck/position-service?broker=bajaj',
+    )
   })
 
   it('resolves broker fan-out list', () => {
