@@ -545,19 +545,20 @@ function WebhookSignalsSection() {
                     <th>Intent</th>
                     <th>Status</th>
                     <th>Message</th>
+                    <th>Detailed message</th>
                     <th>Correlation ID</th>
                   </tr>
                 </thead>
                 <tbody>
                   {mutation.isPending ? (
                     <tr>
-                      <td colSpan={7} className="text-[var(--text3)]">
+                      <td colSpan={8} className="text-[var(--text3)]">
                         Searching webhook signals across brokers...
                       </td>
                     </tr>
                   ) : flat.rows.length === 0 ? (
                     <tr>
-                      <td colSpan={7} className="text-[var(--text3)]">
+                      <td colSpan={8} className="text-[var(--text3)]">
                         No matching signals.
                       </td>
                     </tr>
@@ -583,8 +584,14 @@ function WebhookSignalsSection() {
                               {sig.status || '—'}
                             </span>
                           </td>
-                          <td className="max-w-[280px] truncate text-[var(--text2)]">
+                          <td className="max-w-[220px] truncate text-[var(--text2)]">
                             {sig.message || sig.status_message || '—'}
+                          </td>
+                          <td
+                            className="max-w-[360px] whitespace-normal text-[var(--text)]"
+                            title={sig.detailed_message || undefined}
+                          >
+                            {sig.detailed_message || '—'}
                           </td>
                           <td className="font-mono-dm text-[11px]">
                             {sig.correlation_id || '—'}
@@ -592,7 +599,15 @@ function WebhookSignalsSection() {
                         </tr>,
                         isOpen ? (
                           <tr key={`${key}-detail`}>
-                            <td colSpan={7} className="!pb-3 !pt-0">
+                            <td colSpan={8} className="!pb-3 !pt-0">
+                              {sig.detailed_message ? (
+                                <div className="mb-3 rounded-md border border-[var(--border2)] bg-[var(--s2)] px-3 py-2 text-xs text-[var(--text)]">
+                                  <div className="mb-1 text-[10px] font-semibold uppercase tracking-wide text-[var(--text3)]">
+                                    Detailed message
+                                  </div>
+                                  {sig.detailed_message}
+                                </div>
+                              ) : null}
                               <div className="grid gap-3 lg:grid-cols-2">
                                 <div>
                                   <div className="mb-1 text-[10px] font-semibold uppercase tracking-wide text-[var(--text3)]">
