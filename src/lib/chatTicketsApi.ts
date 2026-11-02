@@ -6,7 +6,7 @@ import type {
 } from '../types/chatTickets'
 
 const PARTNER_CHAT_API_BASE =
-  import.meta.env.VITE_CHAT_API_BASE?.trim() || 'https://api.chat.apt.trading'
+  import.meta.env.VITE_CHAT_API_BASE?.trim() || 'https://api.apt.trading'
 
 function toQueryString(filters: PartnerTicketListFilters): string {
   const params = new URLSearchParams()

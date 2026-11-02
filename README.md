@@ -20,7 +20,7 @@ Open the URL Vite prints (usually `http://localhost:5173`).
 | `VITE_API_PROXY_TARGET` | Optional Vite dev proxy target (only if you explicitly enable proxy-based flows). |
 | `VITE_BRAND_API_PROXY_TARGET` | Brand config backend for local dev (`/v2`). Default: `http://localhost:3000`. |
 | `VITE_BRAND_CONFIG_TOKEN` | Optional default token for Brand Config tab. |
-| `VITE_CHAT_API_BASE` | Partner chat/ticket host (default: `https://api.chat.apt.trading`). |
+| `VITE_CHAT_API_BASE` | Partner chat/ticket host (default: `https://api.apt.trading`). |
 
 ### Two backends
 
