@@ -7,6 +7,12 @@ export const DEFAULT_API_PROXY_TARGET =
 export const API_BASE =
   import.meta.env.VITE_API_BASE?.trim() || DEFAULT_API_PROXY_TARGET
 
+/** OTP auth API base used for request-otp / verify-otp flow. */
+export const AUTH_API_BASE =
+  import.meta.env.DEV
+    ? ''
+    : import.meta.env.VITE_AUTH_API_BASE?.trim() || API_BASE
+
 export const BROKER_NAMES: Record<BrokerKey, string> = {
   all: 'All Brokers',
   tradesmart: 'TradeSmart',

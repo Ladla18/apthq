@@ -21,6 +21,9 @@ export const API_ROUTES = {
 
   webhookSignals: '/api/v1/webhook-signals',
   orphanDiagnosis: '/api/v1/orphan-diagnosis',
+  activeUsers: {
+    selectedClientLogin: '/api/v1/active-users/selected-client/login',
+  },
 
   /** Brand Config API — requires Authorization header on all routes */
   brandConfig: {
@@ -31,6 +34,8 @@ export const API_ROUTES = {
   /** Users & Auth API */
   auth: {
     login: '/v2/users/login',
+    requestOtp: '/api/v1/auth/request-otp',
+    verifyOtp: '/api/v1/auth/verify-otp',
   },
 } as const
 
@@ -63,4 +68,17 @@ export function userLoginUrl(userId: string, from?: string): string {
   const params = new URLSearchParams({ userId })
   if (from) params.set('from', from)
   return `${API_ROUTES.auth.login}?${params.toString()}`
+}
+
+export function requestOtpUrl(): string {
+  return API_ROUTES.auth.requestOtp
+}
+
+export function verifyOtpUrl(): string {
+  return API_ROUTES.auth.verifyOtp
+}
+
+export function selectedClientLoginUrl(brokerName: string): string {
+  const params = new URLSearchParams({ brokername: brokerName })
+  return `${API_ROUTES.activeUsers.selectedClientLogin}?${params.toString()}`
 }

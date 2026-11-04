@@ -1,11 +1,16 @@
 import { describe, expect, it } from 'vitest'
 import { extractTokenFromLogin } from './authApi'
-import { userLoginUrl } from './endpoints'
+import { requestOtpUrl, userLoginUrl, verifyOtpUrl } from './endpoints'
 
 describe('authApi', () => {
   it('builds user login url with userId and optional from query', () => {
     expect(userLoginUrl('12345')).toBe('/v2/users/login?userId=12345')
     expect(userLoginUrl('12345', 'main')).toBe('/v2/users/login?userId=12345&from=main')
+  })
+
+  it('builds otp auth urls', () => {
+    expect(requestOtpUrl()).toBe('/api/v1/auth/request-otp')
+    expect(verifyOtpUrl()).toBe('/api/v1/auth/verify-otp')
   })
 
   it('extracts token from root level token property', () => {

@@ -1,6 +1,8 @@
-import { API_BASE } from './constants'
-import { API_ROUTES } from './endpoints'
+import { API_BASE, AUTH_API_BASE } from './constants'
+import { API_ROUTES, selectedClientLoginUrl } from './endpoints'
 import type {
+  InternalUserRedirectQuery,
+  InternalUserRedirectResponse,
   OrphanDiagnosisQuery,
   OrphanDiagnosisResponse,
   OrderPlacementHealthResponse,
@@ -88,4 +90,68 @@ export async function fetchOrphanDiagnosis(
     params,
     signal,
   )
+}
+
+function pickRedirectUrl(payload: unknown, responseUrl: string, redirected: boolean): string | null {
+  if (payload && typeof payload === 'object') {
+    const raw = payload as Record<string, unknown>
+    const candidates = [
+      raw.redirect_url,
+      raw.redirectUrl,
+      raw.url,
+      raw.login_url,
+      raw.loginUrl,
+      raw.target_url,
+      raw.targetUrl,
+    ]
+    for (const candidate of candidates) {
+      if (typeof candidate === 'string' && candidate.trim()) return candidate.trim()
+    }
+  }
+  if (redirected && responseUrl) return responseUrl
+  return null
+}
+
+export async function redirectSelectedClientLogin(
+  query: InternalUserRedirectQuery,
+  signal?: AbortSignal,
+): Promise<InternalUserRedirectResponse> {
+  const path = selectedClientLoginUrl(query.brokerName)
+  const url = `${AUTH_API_BASE}${path}`
+
+  const res = await fetch(url, {
+    method: 'POST',
+    headers: {
+      Accept: 'application/json',
+      'Content-Type': 'application/json',
+    },
+    credentials: 'include',
+    body: JSON.stringify({
+      user_id: query.userId,
+      password: query.password,
+      otp: query.otp,
+    }),
+    signal,
+  })
+
+  let body: unknown = null
+  try {
+    body = await res.json()
+  } catch {
+    body = null
+  }
+
+  if (!res.ok) {
+    throw new Error(formatApiError(path, res.status, body))
+  }
+
+  const redirectUrl = pickRedirectUrl(body, res.url, res.redirected)
+  const message =
+    body && typeof body === 'object' && typeof (body as { message?: unknown }).message === 'string'
+      ? String((body as { message?: string }).message)
+      : redirectUrl
+        ? 'Redirect URL generated.'
+        : 'Client login succeeded.'
+
+  return { success: true, message, redirectUrl, raw: body }
 }

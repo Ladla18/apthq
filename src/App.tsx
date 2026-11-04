@@ -1,6 +1,7 @@
 import { lazy, Suspense } from 'react'
 import { QueryClient, QueryClientProvider } from '@tanstack/react-query'
 import { DashboardProvider, useDashboard } from './context/DashboardContext'
+import { LoginScreen } from './components/auth/LoginScreen'
 import { ErrorBoundary } from './components/ErrorBoundary'
 import { FooterBar, SubTabs, TopNav } from './components/layout/Layout'
 import { PanelFallback } from './components/ui/Skeleton'
@@ -113,6 +114,12 @@ function TabPanel() {
 }
 
 function DashboardShell() {
+  const { isAuthenticated } = useDashboard()
+
+  if (!isAuthenticated) {
+    return <LoginScreen />
+  }
+
   return (
     <>
       <TopNav />

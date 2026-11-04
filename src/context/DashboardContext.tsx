@@ -6,7 +6,9 @@ import {
   useState,
   type ReactNode,
 } from 'react'
+import { requestOtp, verifyOtp } from '../lib/authApi'
 import { useDashboardQueries } from '../hooks/useDashboardQueries'
+import { setBrandConfigToken } from '../lib/brandConfigApi'
 import { syncBrokersFromHealth } from '../lib/brokers'
 import { BROKER_COLORS, BROKER_NAMES } from '../lib/constants'
 import { defaultDateRange } from '../lib/dates'
@@ -53,9 +55,16 @@ interface DashboardContextValue {
   setActiveTab: (tab: MainTab) => void
   reload: () => void
   exportCsv: () => void
+  isAuthenticated: boolean
+  authEmail: string | null
+  requestLoginOtp: (email: string) => Promise<string | null>
+  verifyLoginOtp: (email: string, code: string) => Promise<string | null>
+  logout: () => void
 }
 
 const DashboardContext = createContext<DashboardContextValue | null>(null)
+const AUTH_TOKEN_STORAGE_KEY = 'apthq-auth-token'
+const AUTH_EMAIL_STORAGE_KEY = 'apthq-auth-email'
 
 export function DashboardProvider({ children }: { children: ReactNode }) {
   const [broker, setBrokerState] = useState<BrokerKey>('all')
@@ -65,6 +74,12 @@ export function DashboardProvider({ children }: { children: ReactNode }) {
   const [dateRange, setDateRange] = useState<DateRange>(defaultDateRange)
   const [activePreset, setActivePreset] = useState<PeriodPreset | null>('30d')
   const [activeTab, setActiveTab] = useState<MainTab>('analytics')
+  const [authToken, setAuthToken] = useState<string>(
+    () => localStorage.getItem(AUTH_TOKEN_STORAGE_KEY)?.trim() ?? '',
+  )
+  const [authEmail, setAuthEmail] = useState<string | null>(
+    () => localStorage.getItem(AUTH_EMAIL_STORAGE_KEY)?.trim() || null,
+  )
 
   const analyticsEnabled = activeTab === 'analytics'
 
@@ -141,6 +156,42 @@ export function DashboardProvider({ children }: { children: ReactNode }) {
     a.click()
   }
 
+  const requestLoginOtp = async (email: string): Promise<string | null> => {
+    const { body } = await requestOtp(email)
+    return typeof body.message === 'string' ? body.message : null
+  }
+
+  const verifyLoginOtp = async (email: string, code: string): Promise<string | null> => {
+    const { body } = await verifyOtp(email, code)
+    const token =
+      (typeof body.token === 'string' && body.token.trim()) ||
+      (typeof body.accessToken === 'string' && body.accessToken.trim()) ||
+      (typeof body.access_token === 'string' && body.access_token.trim()) ||
+      ''
+
+    localStorage.setItem(AUTH_EMAIL_STORAGE_KEY, email.trim())
+    setAuthEmail(email.trim())
+
+    if (token) {
+      localStorage.setItem(AUTH_TOKEN_STORAGE_KEY, token)
+      setAuthToken(token)
+      setBrandConfigToken(token)
+    } else {
+      localStorage.removeItem(AUTH_TOKEN_STORAGE_KEY)
+      setAuthToken('__verified__')
+    }
+
+    return typeof body.message === 'string' ? body.message : null
+  }
+
+  const logout = () => {
+    localStorage.removeItem(AUTH_TOKEN_STORAGE_KEY)
+    localStorage.removeItem(AUTH_EMAIL_STORAGE_KEY)
+    setBrandConfigToken('')
+    setAuthToken('')
+    setAuthEmail(null)
+  }
+
   const value: DashboardContextValue = {
     broker,
     setBroker,
@@ -161,6 +212,11 @@ export function DashboardProvider({ children }: { children: ReactNode }) {
     setActiveTab,
     reload,
     exportCsv,
+    isAuthenticated: Boolean(authToken),
+    authEmail,
+    requestLoginOtp,
+    verifyLoginOtp,
+    logout,
   }
 
   return (

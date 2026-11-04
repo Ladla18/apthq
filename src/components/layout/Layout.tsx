@@ -61,7 +61,7 @@ export function PeriodFilters() {
 }
 
 export function TopNav() {
-  const { broker, setBroker, brokerOptions, brokerColor } = useDashboard()
+  const { broker, setBroker, brokerOptions, brokerColor, authEmail, logout } = useDashboard()
   const { isLight, toggleTheme } = useTheme()
   const [menuOpen, setMenuOpen] = useState(false)
   const wrapRef = useRef<HTMLDivElement>(null)
@@ -153,7 +153,9 @@ export function TopNav() {
                 </div>
                 <div>
                   <div className="text-[13px] font-medium text-[var(--text)]">Apt HQ Admin</div>
-                  <div className="mt-0.5 text-[11px] text-[var(--text3)]">admin@apthq.io</div>
+                  <div className="mt-0.5 text-[11px] text-[var(--text3)]">
+                    {authEmail || 'admin@apthq.io'}
+                  </div>
                 </div>
               </div>
               <div className="h-px bg-[var(--border)]" />
@@ -161,7 +163,7 @@ export function TopNav() {
                 type="button"
                 className="flex w-full cursor-pointer items-center gap-2 border-none bg-transparent px-3.5 py-2.5 text-[13px] text-[var(--text2)] transition-colors hover:bg-[var(--s2)] hover:text-[var(--red)]"
                 style={{ fontFamily: "'DM Sans', sans-serif" }}
-                onClick={() => alert('Logging out…')}
+                onClick={logout}
               >
                 <svg width="13" height="13" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2" strokeLinecap="round" aria-hidden>
                   <path d="M9 21H5a2 2 0 0 1-2-2V5a2 2 0 0 1 2-2h4" />

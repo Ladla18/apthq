@@ -213,3 +213,17 @@ export interface OrphanDiagnosisQuery {
   strategyId: string
   includeLogs: boolean
 }
+
+export interface InternalUserRedirectQuery {
+  brokerName: string
+  userId: string
+  password: string
+  otp: string
+}
+
+export interface InternalUserRedirectResponse {
+  success?: boolean
+  message?: string
+  redirectUrl?: string | null
+  raw?: unknown
+}

@@ -17,16 +17,21 @@ Open the URL Vite prints (usually `http://localhost:5173`).
 | Variable | Description |
 |----------|-------------|
 | `VITE_API_BASE` | Direct API base URL for analytics/health endpoints (no proxy). |
+| `VITE_AUTH_API_BASE` | OTP auth API base for login (`/api/v1/auth/request-otp` and `/api/v1/auth/verify-otp`). |
 | `VITE_API_PROXY_TARGET` | Optional Vite dev proxy target (only if you explicitly enable proxy-based flows). |
 | `VITE_BRAND_API_PROXY_TARGET` | Brand config backend for local dev (`/v2`). Default: `http://localhost:3000`. |
 | `VITE_BRAND_CONFIG_TOKEN` | Optional default token for Brand Config tab. |
 | `VITE_CHAT_API_BASE` | Partner chat/ticket host (default: `https://api.apt.trading`). |
+
+Auth note (dev): OTP/internal-login calls use same-origin `/api/v1/...` via Vite proxy to avoid browser CORS issues with `credentials: include`.
 
 ### Two backends
 
 | Routes | Backend |
 |--------|---------|
 | `/api/v1/*`, `/health` | AWS Lambda (analytics) |
+| `/api/v1/auth/*` | OTP auth service (`VITE_AUTH_API_BASE`, default follows `VITE_API_BASE` Lambda host; proxied in dev) |
+| `/api/v1/active-users/*` | Internal user login/redirect service (same auth proxy target in dev) |
 | `/v2/aggregate/*`, `/v2/users/login` | Brand config API (Vercel serverless in prod, `server.js` locally) |
 
 **Local dev:** run both processes:

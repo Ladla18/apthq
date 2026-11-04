@@ -6,7 +6,7 @@ import {
   usePatchAllBrandConfigs,
   usePatchCurrentBrandConfig,
 } from '../../hooks/useBrandConfigQueries'
-import { extractTokenFromLogin, loginUser } from '../../lib/authApi'
+import { extractTokenFromLogin, requestOtp, verifyOtp } from '../../lib/authApi'
 import {
   extractBrandConfigToken,
   normalizeSessionTokenInput,
@@ -179,9 +179,11 @@ export function BrandConfigPanel() {
   const [tokenInput, setTokenInput] = useState(getBrandConfigToken())
   const token = useBrandConfigToken()
   const [tokenSaveMessage, setTokenSaveMessage] = useState<string | null>(null)
-  const [loginUserId, setLoginUserId] = useState('69cf7bc6bba75822177c84ef')
-  const [loginFrom, setLoginFrom] = useState('main')
-  const [isLoggingIn, setIsLoggingIn] = useState(false)
+  const [loginEmail, setLoginEmail] = useState('waheguru.singh@apt.trading')
+  const [otpCode, setOtpCode] = useState('')
+  const [isRequestingOtp, setIsRequestingOtp] = useState(false)
+  const [isVerifyingOtp, setIsVerifyingOtp] = useState(false)
+  const [otpRequested, setOtpRequested] = useState(false)
   const [loginError, setLoginError] = useState<string | null>(null)
   const [loginSuccess, setLoginSuccess] = useState<string | null>(null)
   const [currentConfigType, setCurrentConfigType] = useState('')
@@ -254,41 +256,73 @@ export function BrandConfigPanel() {
     setLoginError(null)
   }
 
-  const handleLogin = async (e?: React.FormEvent) => {
+  const handleRequestOtp = async (e?: React.FormEvent) => {
     if (e) e.preventDefault()
-    const trimmedId = loginUserId.trim()
-    if (!trimmedId) {
-      setLoginError('Please enter a User ID')
+    const trimmedEmail = loginEmail.trim()
+    if (!trimmedEmail) {
+      setLoginError('Please enter an email')
       return
     }
 
-    setIsLoggingIn(true)
+    setIsRequestingOtp(true)
     setLoginError(null)
     setLoginSuccess(null)
 
     try {
-      const { body, sessionToken } = await loginUser(trimmedId, loginFrom?.trim() || undefined)
-      const tokenFound =
-        extractBrandConfigToken(body, sessionToken) ?? extractTokenFromLogin(body)
+      const { body } = await requestOtp(trimmedEmail)
+      setOtpRequested(true)
+      setLoginSuccess(body.message || `OTP sent to ${trimmedEmail}. Please verify to complete login.`)
+      setSummary({
+        endpoint: 'POST /api/v1/auth/request-otp',
+        count: '1',
+        status: 'OTP sent',
+      })
+    } catch (err) {
+      setLoginError(err instanceof Error ? err.message : 'OTP request failed')
+    } finally {
+      setIsRequestingOtp(false)
+    }
+  }
+
+  const handleVerifyOtp = async (e?: React.FormEvent) => {
+    if (e) e.preventDefault()
+    const trimmedEmail = loginEmail.trim()
+    const trimmedCode = otpCode.trim()
+    if (!trimmedEmail) {
+      setLoginError('Please enter an email')
+      return
+    }
+    if (!trimmedCode) {
+      setLoginError('Please enter the OTP code')
+      return
+    }
+
+    setIsVerifyingOtp(true)
+    setLoginError(null)
+    setLoginSuccess(null)
+
+    try {
+      const { body } = await verifyOtp(trimmedEmail, trimmedCode)
+      const tokenFound = extractBrandConfigToken(body) ?? extractTokenFromLogin(body)
       if (tokenFound) {
         setTokenInput(tokenFound)
         setBrandConfigToken(tokenFound)
         setTokenSaveMessage('Token saved in this browser (localStorage).')
-        setLoginSuccess(`Logged in successfully as ${trimmedId}! Token automatically applied.`)
+        setLoginSuccess('OTP verified. Login successful and token applied.')
         setSummary({
-          endpoint: 'POST /v2/users/login',
+          endpoint: 'POST /api/v1/auth/verify-otp',
           count: '1',
           status: 'Authenticated',
         })
       } else {
         setLoginError(
-          'Login succeeded but no session_token was returned. Paste session_token from aptdemo site cookies (DevTools → Application → Cookies → session_token).',
+          'OTP verified but no token was returned. Paste token manually in Access token field.',
         )
       }
     } catch (err) {
-      setLoginError(err instanceof Error ? err.message : 'Login failed')
+      setLoginError(err instanceof Error ? err.message : 'OTP verification failed')
     } finally {
-      setIsLoggingIn(false)
+      setIsVerifyingOtp(false)
     }
   }
 
@@ -377,8 +411,8 @@ export function BrandConfigPanel() {
       <div className="mb-3 rounded-[var(--rlg)] border border-[var(--border2)] bg-[var(--s1)] p-3 text-xs leading-relaxed text-[var(--text2)]">
         Manage per-broker <strong>theme &amp; branding</strong> (colors, typography, keys) via{' '}
         <span className="font-mono-dm">/v2/aggregate</span>. Fetch and edit configs per broker,
-        or patch all brokers at once. On the deployed app, login with any User ID and click Fetch —
-        no aptdemo cookie needed.
+        or patch all brokers at once. Login now uses OTP flow (request + verify), then token is
+        auto-applied for aggregate APIs.
       </div>
 
       <div className="mb-3 rounded-[var(--rlg)] border border-[var(--amber)]/40 bg-[rgba(245,158,11,0.08)] p-3 text-xs leading-relaxed text-[var(--text2)]">
@@ -389,34 +423,47 @@ export function BrandConfigPanel() {
       <div className="mb-3 rounded-[var(--rlg)] border border-[var(--border)] bg-[var(--s1)] p-[18px]">
         <div className="mb-4">
           <div className="flex items-center justify-between">
-            <SubLabel>1. Generate Token via Login API</SubLabel>
+            <SubLabel>1. Login via OTP API</SubLabel>
             <span className="font-mono-dm text-[11px] text-[var(--purple)]">
-              POST /v2/users/login
+              POST /api/v1/auth/request-otp + /verify-otp
             </span>
           </div>
-          <form onSubmit={handleLogin} className="mt-1 flex flex-col gap-2 sm:flex-row sm:items-center">
+          <form onSubmit={handleRequestOtp} className="mt-1 flex flex-col gap-2 sm:flex-row sm:items-center">
             <input
-              type="text"
-              value={loginUserId}
-              onChange={(e) => setLoginUserId(e.target.value)}
-              placeholder="User ID (e.g. 69cf7bc6bba75822177c84ef)"
+              type="email"
+              value={loginEmail}
+              onChange={(e) => setLoginEmail(e.target.value)}
+              placeholder="Email (e.g. waheguru.singh@apt.trading)"
               className="h-8 w-full rounded-lg border border-[var(--border2)] bg-[var(--s2)] px-2.5 font-mono-dm text-xs text-[var(--text)] outline-none sm:flex-1"
-            />
-            <input
-              type="text"
-              value={loginFrom}
-              onChange={(e) => setLoginFrom(e.target.value)}
-              placeholder="from (e.g. main)"
-              className="h-8 w-full rounded-lg border border-[var(--border2)] bg-[var(--s2)] px-2.5 font-mono-dm text-xs text-[var(--text)] outline-none sm:w-28"
             />
             <button
               type="submit"
-              disabled={isLoggingIn}
+              disabled={isRequestingOtp}
               className="btn-csv w-full justify-center sm:w-auto"
             >
-              {isLoggingIn ? 'Logging in...' : 'Login & Set Token'}
+              {isRequestingOtp ? 'Sending OTP...' : 'Request OTP'}
             </button>
           </form>
+          <form onSubmit={handleVerifyOtp} className="mt-2 flex flex-col gap-2 sm:flex-row sm:items-center">
+            <input
+              type="text"
+              inputMode="numeric"
+              value={otpCode}
+              onChange={(e) => setOtpCode(e.target.value)}
+              placeholder="Enter OTP code"
+              className="h-8 w-full rounded-lg border border-[var(--border2)] bg-[var(--s2)] px-2.5 font-mono-dm text-xs text-[var(--text)] outline-none sm:flex-1"
+            />
+            <button
+              type="submit"
+              disabled={isVerifyingOtp || !otpRequested}
+              className="btn-csv w-full justify-center sm:w-auto"
+            >
+              {isVerifyingOtp ? 'Verifying...' : 'Verify OTP & Set Token'}
+            </button>
+          </form>
+          <p className="mt-1.5 text-[11px] text-[var(--text3)]">
+            Request OTP first, then verify with the code from email.
+          </p>
           {loginSuccess && (
             <p className="mt-1.5 text-[11px] text-[var(--green)]" role="status">
               ✓ {loginSuccess}
@@ -436,7 +483,7 @@ export function BrandConfigPanel() {
               type="password"
               value={tokenInput}
               onChange={(e) => setTokenInput(e.target.value)}
-              placeholder="Paste or edit access token (auto-filled after login)"
+              placeholder="Paste or edit access token (auto-filled after OTP verify)"
               className="h-8 w-full rounded-lg border border-[var(--border2)] bg-[var(--s2)] px-2.5 font-mono-dm text-xs text-[var(--text)] outline-none sm:flex-1"
               autoComplete="off"
             />

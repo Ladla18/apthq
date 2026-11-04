@@ -1,10 +1,10 @@
-import { API_BASE } from './constants'
-import { userLoginUrl } from './endpoints'
+import { API_BASE, AUTH_API_BASE } from './constants'
+import { requestOtpUrl, userLoginUrl, verifyOtpUrl } from './endpoints'
 import {
   extractBrandConfigToken,
   parseSessionTokenFromSetCookie,
 } from './brandConfigAuth'
-import type { LoginResponse } from '../types/auth'
+import type { LoginResponse, OtpApiResponse } from '../types/auth'
 
 export { extractBrandConfigToken, parseSessionTokenFromSetCookie } from './brandConfigAuth'
 
@@ -40,6 +40,14 @@ export interface LoginResult {
   sessionToken: string | null
 }
 
+export interface OtpRequestResult {
+  body: OtpApiResponse
+}
+
+export interface OtpVerifyResult {
+  body: OtpApiResponse
+}
+
 async function parseLoginError(res: Response): Promise<string> {
   try {
     const body = (await res.json()) as { message?: string; error?: string; detail?: string }
@@ -47,6 +55,29 @@ async function parseLoginError(res: Response): Promise<string> {
   } catch {
     return `${res.status} ${res.statusText}`
   }
+}
+
+async function postAuthJson<TBody extends Record<string, unknown>, TResponse>(
+  endpoint: string,
+  body: TBody,
+  signal?: AbortSignal,
+): Promise<TResponse> {
+  const res = await fetch(`${AUTH_API_BASE}${endpoint}`, {
+    method: 'POST',
+    headers: {
+      Accept: 'application/json',
+      'Content-Type': 'application/json',
+    },
+    credentials: 'include',
+    body: JSON.stringify(body),
+    signal,
+  })
+
+  if (!res.ok) {
+    throw new Error(await parseLoginError(res))
+  }
+
+  return (await res.json()) as TResponse
 }
 
 /**
@@ -88,4 +119,40 @@ export async function loginUser(
     extractBrandConfigToken(body)
 
   return { body, sessionToken }
+}
+
+export async function requestOtp(email: string, signal?: AbortSignal): Promise<OtpRequestResult> {
+  const trimmedEmail = email.trim()
+  if (!trimmedEmail) {
+    throw new Error('Email is required to request OTP')
+  }
+
+  const body = await postAuthJson<{ email: string }, OtpApiResponse>(
+    requestOtpUrl(),
+    { email: trimmedEmail },
+    signal,
+  )
+  return { body }
+}
+
+export async function verifyOtp(
+  email: string,
+  code: string,
+  signal?: AbortSignal,
+): Promise<OtpVerifyResult> {
+  const trimmedEmail = email.trim()
+  const trimmedCode = code.trim()
+  if (!trimmedEmail) {
+    throw new Error('Email is required to verify OTP')
+  }
+  if (!trimmedCode) {
+    throw new Error('OTP code is required')
+  }
+
+  const body = await postAuthJson<{ email: string; code: string }, OtpApiResponse>(
+    verifyOtpUrl(),
+    { email: trimmedEmail, code: trimmedCode },
+    signal,
+  )
+  return { body }
 }

@@ -87,6 +87,10 @@ export default defineConfig(({ mode }) => {
   const env = loadEnv(mode, process.cwd(), '')
   const apiProxyTarget =
     env.VITE_API_PROXY_TARGET?.trim() || DEFAULT_API_PROXY_TARGET
+  const authProxyTarget =
+    env.VITE_AUTH_API_BASE?.trim() ||
+    env.VITE_API_BASE?.trim() ||
+    apiProxyTarget
   const v2ProxyTarget =
     env.VITE_V2_PROXY_TARGET?.trim() ||
     env.VITE_MAIN_API_PROXY_TARGET?.trim() ||
@@ -103,6 +107,8 @@ export default defineConfig(({ mode }) => {
     plugins: [react(), tailwindcss()],
     server: {
       proxy: {
+        '/api/v1/auth': { target: authProxyTarget, changeOrigin: true },
+        '/api/v1/active-users': { target: authProxyTarget, changeOrigin: true },
         '/api': { target: apiProxyTarget, changeOrigin: true },
         '/health': { target: apiProxyTarget, changeOrigin: true },
         ...(brandConfigUseAptdemo

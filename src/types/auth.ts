@@ -25,3 +25,21 @@ export interface LoginResponse {
   user?: LoginUser
   [key: string]: unknown
 }
+
+export interface OtpRequestBody {
+  email: string
+}
+
+export interface OtpVerifyBody extends OtpRequestBody {
+  code: string
+}
+
+export interface OtpApiResponse {
+  success?: boolean
+  message?: string
+  token?: string
+  accessToken?: string
+  access_token?: string
+  data?: LoginResponseData | string
+  [key: string]: unknown
+}
