@@ -1,7 +1,7 @@
 import type { BrokerKey, ServerRow, TokenRow } from '../types/dashboard'
 
 export const DEFAULT_API_PROXY_TARGET =
-  'https://zq64cz3rlu4mddosjkdnqvto2e0evpei.lambda-url.ap-south-1.on.aws'
+  'https://c2p2zbo6k4tyzszf2abtukmrwa0aktcx.lambda-url.ap-south-1.on.aws/'
 
 /** Client-side API base. Defaults to direct upstream API host (no proxy). */
 export const API_BASE =

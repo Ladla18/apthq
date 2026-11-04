@@ -3,7 +3,7 @@ import react from '@vitejs/plugin-react'
 import tailwindcss from '@tailwindcss/vite'
 
 const DEFAULT_API_PROXY_TARGET =
-  'https://2ky37g6kcgsboe6xos5ida6ohe0rnwnk.lambda-url.ap-south-1.on.aws'
+  'https://c2p2zbo6k4tyzszf2abtukmrwa0aktcx.lambda-url.ap-south-1.on.aws/'
 
 const DEFAULT_V2_PROXY_TARGET = 'https://api.aptdemo.atoms.trade'
 
