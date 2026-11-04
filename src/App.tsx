@@ -39,6 +39,11 @@ const HqOpsPanel = lazy(() =>
     default: m.HqOpsPanel,
   })),
 )
+const InternalUserRedirectPanel = lazy(() =>
+  import('./components/panels/InternalUserRedirectPanel').then((m) => ({
+    default: m.InternalUserRedirectPanel,
+  })),
+)
 const ChatTicketsPanel = lazy(() =>
   import('./components/panels/ChatTicketsPanel').then((m) => ({
     default: m.ChatTicketsPanel,
@@ -95,6 +100,11 @@ function TabPanel() {
     hqops: (
       <ErrorBoundary label="HQ Ops">
         <HqOpsPanel />
+      </ErrorBoundary>
+    ),
+    internalredirect: (
+      <ErrorBoundary label="Internal User Redirect">
+        <InternalUserRedirectPanel />
       </ErrorBoundary>
     ),
     chattickets: (

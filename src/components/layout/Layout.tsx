@@ -190,6 +190,7 @@ export function SubTabs() {
     { id: 'healthcheckv3', label: 'Health Check v3' },
     { id: 'debugstrategy', label: 'Debug Strategy' },
     { id: 'hqops', label: 'HQ Ops' },
+    { id: 'internalredirect', label: 'Internal Redirect' },
     { id: 'chattickets', label: 'Chat Tickets' },
   ]
 
