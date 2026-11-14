@@ -1,7 +1,5 @@
-import { useState } from 'react'
+import { useState, type FormEvent } from 'react'
 import { useDashboard } from '../../context/DashboardContext'
-import { useInternalUserRedirect } from '../../hooks/useHqOpsQueries'
-import { SectionError } from '../ui/SectionState'
 import { Badge, SectionHeader } from '../ui/Shared'
 
 const inputClass =
@@ -9,60 +7,87 @@ const inputClass =
 
 export function InternalUserRedirectPanel() {
   const { authEmail } = useDashboard()
-  const mutation = useInternalUserRedirect()
-  const [brokerName, setBrokerName] = useState('tradebulls')
+  const [apiUrl, setApiUrl] = useState(
+    'https://api.aptalgo.tradebulls.in/v2/active_users/selected_client/login',
+  )
   const [userId, setUserId] = useState('')
   const [password, setPassword] = useState('')
   const [otp, setOtp] = useState('')
   const [inputError, setInputError] = useState<string | null>(null)
-  const [resultMessage, setResultMessage] = useState<string | null>(null)
-  const [redirectUrl, setRedirectUrl] = useState<string | null>(null)
+  const [resultMessage, setResultMessage] = useState('Waiting.')
   const isInternalUser = authEmail?.toLowerCase().endsWith('@apt.trading') ?? false
 
-  const runRedirect = () => {
+  const validate = (): boolean => {
     if (!isInternalUser) {
       setInputError('Only internal users can run selected-client redirect.')
-      return
+      return false
     }
-    const broker = brokerName.trim().toLowerCase()
-    if (!broker) {
-      setInputError('Broker name is required.')
-      return
+    if (!apiUrl.trim()) {
+      setInputError('API URL is required.')
+      return false
     }
     if (!userId.trim()) {
       setInputError('User ID is required.')
-      return
+      return false
     }
     if (!password.trim()) {
       setInputError('Password is required.')
-      return
+      return false
     }
     if (!otp.trim()) {
       setInputError('OTP is required.')
+      return false
+    }
+    setInputError(null)
+    return true
+  }
+
+  const onFollowRedirect = (e: FormEvent<HTMLFormElement>) => {
+    if (!validate()) {
+      e.preventDefault()
       return
     }
+    setResultMessage('Posting form. Browser should leave this page on 302 redirect.')
+  }
 
-    setInputError(null)
-    setResultMessage(null)
-    setRedirectUrl(null)
+  const runInspect = async () => {
+    if (!validate()) return
 
-    mutation.mutate(
-      {
-        brokerName: broker,
-        userId: userId.trim(),
-        password,
-        otp: otp.trim(),
-      },
-      {
-        onSuccess: (data) => {
-          setResultMessage(data.message || 'Client login succeeded.')
-          setRedirectUrl(data.redirectUrl ?? null)
-          if (data.redirectUrl) {
-            window.location.assign(data.redirectUrl)
-          }
-        },
-      },
-    )
+    setResultMessage('Sending JSON POST with redirect: manual...')
+
+    try {
+      const res = await fetch(apiUrl.trim(), {
+        method: 'POST',
+        headers: { 'Content-Type': 'application/json' },
+        credentials: 'include',
+        redirect: 'manual',
+        body: JSON.stringify({
+          user_id: userId.trim(),
+          password,
+          otp: otp.trim(),
+        }),
+      })
+
+      const lines: string[] = [
+        `type: ${res.type}`,
+        `status: ${res.status}`,
+        `ok: ${String(res.ok)}`,
+        `url: ${res.url}`,
+        `location header: ${res.headers.get('location') || '(not exposed to script)'}`,
+      ]
+
+      if (res.type === 'opaqueredirect' || res.status === 0) {
+        lines.push('', 'Opaque 302. Use "Follow redirect" to land on target app.')
+      } else {
+        const text = await res.text()
+        lines.push('', text.slice(0, 800))
+      }
+
+      setResultMessage(lines.join('\n'))
+    } catch (err) {
+      const message = err instanceof Error ? err.message : String(err)
+      setResultMessage(`Request failed: ${message}`)
+    }
   }
 
   return (
@@ -75,7 +100,8 @@ export function InternalUserRedirectPanel() {
       />
 
       <div className="mb-4 rounded-[var(--rlg)] border border-[var(--border2)] bg-[var(--s1)] p-3 text-xs leading-relaxed text-[var(--text2)]">
-        Login to selected client with broker + user credentials and redirect to the returned target URL.
+        Follow redirect posts a normal form and lets browser follow 302. Inspect 302 sends the
+        same body as JSON with <span className="font-mono-dm">redirect: manual</span>.
       </div>
 
       <div className="rounded-[var(--rlg)] border border-[var(--border)] bg-[var(--s1)] p-[18px]">
@@ -85,99 +111,92 @@ export function InternalUserRedirectPanel() {
           </p>
         ) : null}
 
-        <div className="mb-3 grid gap-2 sm:grid-cols-2 lg:grid-cols-4">
-          <label className="block text-[10px] font-semibold uppercase tracking-wide text-[var(--text3)]">
-            Broker name
+        <form className="mb-3" method="post" action={apiUrl.trim()} onSubmit={onFollowRedirect}>
+          <label className="mb-3 block text-[10px] font-semibold uppercase tracking-wide text-[var(--text3)]">
+            API URL
             <input
               className={`${inputClass} mt-1 font-mono-dm`}
-              value={brokerName}
+              value={apiUrl}
               disabled={!isInternalUser}
               onChange={(e) => {
-                setBrokerName(e.target.value)
+                setApiUrl(e.target.value)
                 setInputError(null)
               }}
-              placeholder="tradebulls"
+              placeholder="https://api.aptalgo.tradebulls.in/v2/active_users/selected_client/login"
             />
           </label>
-          <label className="block text-[10px] font-semibold uppercase tracking-wide text-[var(--text3)]">
-            Client user_id
-            <input
-              className={`${inputClass} mt-1 font-mono-dm`}
-              value={userId}
-              disabled={!isInternalUser}
-              onChange={(e) => {
-                setUserId(e.target.value)
-                setInputError(null)
-              }}
-              placeholder="wahe"
-            />
-          </label>
-          <label className="block text-[10px] font-semibold uppercase tracking-wide text-[var(--text3)]">
-            Client password
-            <input
-              type="password"
-              className={`${inputClass} mt-1 font-mono-dm`}
-              value={password}
-              disabled={!isInternalUser}
-              onChange={(e) => {
-                setPassword(e.target.value)
-                setInputError(null)
-              }}
-              placeholder="••••••••"
-              autoComplete="off"
-            />
-          </label>
-          <label className="block text-[10px] font-semibold uppercase tracking-wide text-[var(--text3)]">
-            Client OTP
-            <input
-              className={`${inputClass} mt-1 font-mono-dm`}
-              value={otp}
-              disabled={!isInternalUser}
-              onChange={(e) => {
-                setOtp(e.target.value)
-                setInputError(null)
-              }}
-              placeholder="421833"
-              inputMode="numeric"
-            />
-          </label>
-        </div>
 
-        <div className="mb-2 flex flex-col gap-2 sm:flex-row sm:items-center sm:justify-between">
-          <p className="m-0 text-xs text-[var(--text3)]">
-            Calls <span className="font-mono-dm">/api/v1/active-users/selected-client/login</span>{' '}
-            and redirects on success.
-          </p>
-          <button
-            type="button"
-            className="btn-csv w-full justify-center sm:w-auto"
-            disabled={mutation.isPending || !isInternalUser}
-            onClick={runRedirect}
-          >
-            {mutation.isPending ? 'Redirecting...' : 'Login & Redirect'}
-          </button>
-        </div>
+          <div className="grid gap-2 sm:grid-cols-2 lg:grid-cols-3">
+            <label className="block text-[10px] font-semibold uppercase tracking-wide text-[var(--text3)]">
+              Client user_id
+              <input
+                name="user_id"
+                className={`${inputClass} mt-1 font-mono-dm`}
+                value={userId}
+                disabled={!isInternalUser}
+                onChange={(e) => {
+                  setUserId(e.target.value)
+                  setInputError(null)
+                }}
+                placeholder="wahe"
+              />
+            </label>
+            <label className="block text-[10px] font-semibold uppercase tracking-wide text-[var(--text3)]">
+              Client password
+              <input
+                name="password"
+                type="password"
+                className={`${inputClass} mt-1 font-mono-dm`}
+                value={password}
+                disabled={!isInternalUser}
+                onChange={(e) => {
+                  setPassword(e.target.value)
+                  setInputError(null)
+                }}
+                placeholder="••••••••"
+                autoComplete="off"
+              />
+            </label>
+            <label className="block text-[10px] font-semibold uppercase tracking-wide text-[var(--text3)]">
+              Client OTP
+              <input
+                name="otp"
+                className={`${inputClass} mt-1 font-mono-dm`}
+                value={otp}
+                disabled={!isInternalUser}
+                onChange={(e) => {
+                  setOtp(e.target.value)
+                  setInputError(null)
+                }}
+                placeholder="421833"
+                inputMode="numeric"
+              />
+            </label>
+          </div>
+
+          <div className="mt-3 flex flex-col gap-2 sm:flex-row">
+            <button type="submit" className="btn-csv w-full justify-center sm:w-auto" disabled={!isInternalUser}>
+              Follow redirect
+            </button>
+            <button
+              type="button"
+              className="btn-csv w-full justify-center sm:w-auto"
+              disabled={!isInternalUser}
+              onClick={() => void runInspect()}
+            >
+              Inspect 302
+            </button>
+          </div>
+        </form>
 
         {inputError && (
           <p className="mb-2 text-xs text-[var(--red)]" role="alert">
             {inputError}
           </p>
         )}
-        {mutation.isError && (
-          <div className="mb-2">
-            <SectionError message={mutation.error.message} onRetry={runRedirect} />
-          </div>
-        )}
-        {resultMessage && !mutation.isError && (
-          <p className="text-xs text-[var(--live)]" role="status">
-            {resultMessage}
-          </p>
-        )}
-        {redirectUrl && (
-          <p className="mt-1 break-all text-[11px] text-[var(--text3)]">
-            Redirect URL: <span className="font-mono-dm">{redirectUrl}</span>
-          </p>
-        )}
+        <pre className="m-0 max-h-[320px] overflow-auto whitespace-pre-wrap break-words rounded-lg border border-[var(--border2)] bg-[var(--s2)] p-3 font-mono-dm text-[11px] leading-snug text-[var(--text2)]">
+          {resultMessage}
+        </pre>
       </div>
     </section>
   )
