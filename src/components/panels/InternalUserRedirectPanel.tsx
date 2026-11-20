@@ -5,17 +5,41 @@ import { Badge, SectionHeader } from '../ui/Shared'
 const inputClass =
   'h-8 w-full rounded-lg border border-[var(--border2)] bg-[var(--s2)] px-2.5 text-xs text-[var(--text)] outline-none'
 
+const SELECTED_CLIENT_LOGIN_PATH = '/v2/active_users/selected_client/login'
+
+const PARTNER_APIS = [
+  { id: 'smc', label: 'SMC', environment: 'prod', brokerName: 'smcodin', apiUrl: 'https://api.algoai.smctradeonline.com' },
+  { id: 'tradebulls', label: 'Tradebulls', environment: 'prod', brokerName: 'tradebulls', apiUrl: 'https://api.aptalgo.tradebulls.in' },
+  { id: 'tradesmart', label: 'Tradesmart', environment: 'prod', brokerName: 'tradesmart', apiUrl: 'https://api.smartalgo.tradesmartonline.in' },
+  { id: 'devclients', label: 'Dev clients (Navia)', environment: 'dev', brokerName: 'navia', apiUrl: 'https://api.dev.atoms.trade' },
+  { id: 'bajaj', label: 'Bajaj', environment: 'prod', brokerName: 'bajaj', apiUrl: 'https://api.algotrade.bajajbroking.in' },
+  { id: 'navia', label: 'Navia', environment: 'prod', brokerName: 'navia', apiUrl: 'https://api.algotrade.navia.co.in' },
+  { id: 'bajaj-trial', label: 'Bajaj trial', environment: 'prod', brokerName: 'navia', apiUrl: 'https://api.bajaj.atoms.trade' },
+  { id: 'new-test', label: 'New test (Apt)', environment: 'dev', brokerName: 'tradebulls', apiUrl: 'https://api.webtest.apt.trading' },
+  { id: 'stoxkart', label: 'Stoxkart', environment: 'prod', brokerName: 'stoxkart', apiUrl: 'https://api.stoxkart.atoms.trade' },
+  { id: 'moneysukh', label: 'Moneysukh', environment: 'prod', brokerName: 'moneysukh', apiUrl: 'https://api.algo360.moneysukh.com' },
+  { id: 'globecapital', label: 'Globe Capital', environment: 'prod', brokerName: 'globe', apiUrl: 'https://api.aialgo.globecapitalonline.com' },
+  { id: 'custom', label: 'Custom URL', environment: '', brokerName: '', apiUrl: '' },
+] as const
+
+function selectedClientLoginUrl(apiUrl: string): string {
+  const base = apiUrl.trim().replace(/\/$/, '')
+  return base ? `${base}${SELECTED_CLIENT_LOGIN_PATH}` : ''
+}
+
 export function InternalUserRedirectPanel() {
   const { authEmail } = useDashboard()
-  const [apiUrl, setApiUrl] = useState(
-    'https://api.aptalgo.tradebulls.in/v2/active_users/selected_client/login',
-  )
+  const [partnerId, setPartnerId] = useState<(typeof PARTNER_APIS)[number]['id']>('tradebulls')
+  const [customUrl, setCustomUrl] = useState('')
   const [userId, setUserId] = useState('')
   const [password, setPassword] = useState('')
   const [otp, setOtp] = useState('')
   const [inputError, setInputError] = useState<string | null>(null)
   const [resultMessage, setResultMessage] = useState('Waiting.')
   const isInternalUser = authEmail?.toLowerCase().endsWith('@apt.trading') ?? false
+  const selectedPartner = PARTNER_APIS.find((partner) => partner.id === partnerId) ?? PARTNER_APIS[0]
+  const apiUrl =
+    partnerId === 'custom' ? customUrl.trim() : selectedClientLoginUrl(selectedPartner.apiUrl)
 
   const validate = (): boolean => {
     if (!isInternalUser) {
@@ -113,18 +137,44 @@ export function InternalUserRedirectPanel() {
 
         <form className="mb-3" method="post" action={apiUrl.trim()} onSubmit={onFollowRedirect}>
           <label className="mb-3 block text-[10px] font-semibold uppercase tracking-wide text-[var(--text3)]">
+            Partner API
+            <select
+              className={`${inputClass} mt-1`}
+              value={partnerId}
+              disabled={!isInternalUser}
+              onChange={(e) => {
+                setPartnerId(e.target.value as (typeof PARTNER_APIS)[number]['id'])
+                setInputError(null)
+              }}
+            >
+              {PARTNER_APIS.map((partner) => (
+                <option key={partner.id} value={partner.id}>
+                  {partner.id === 'custom'
+                    ? partner.label
+                    : `${partner.label} · ${partner.environment} · ${partner.brokerName}`}
+                </option>
+              ))}
+            </select>
+          </label>
+
+          <label className="mb-3 block text-[10px] font-semibold uppercase tracking-wide text-[var(--text3)]">
             API URL
             <input
               className={`${inputClass} mt-1 font-mono-dm`}
-              value={apiUrl}
+              value={partnerId === 'custom' ? customUrl : apiUrl}
+              readOnly={partnerId !== 'custom'}
               disabled={!isInternalUser}
               onChange={(e) => {
-                setApiUrl(e.target.value)
+                setCustomUrl(e.target.value)
                 setInputError(null)
               }}
               placeholder="https://api.aptalgo.tradebulls.in/v2/active_users/selected_client/login"
             />
           </label>
+          <p className="mb-3 text-[11px] text-[var(--text3)]">
+            Login path is <span className="font-mono-dm">{SELECTED_CLIENT_LOGIN_PATH}</span> on the
+            selected partner <span className="font-mono-dm">api_url</span>.
+          </p>
 
           <div className="grid gap-2 sm:grid-cols-2 lg:grid-cols-3">
             <label className="block text-[10px] font-semibold uppercase tracking-wide text-[var(--text3)]">
