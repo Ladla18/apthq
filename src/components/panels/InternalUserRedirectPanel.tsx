@@ -1,5 +1,7 @@
-import { useState, type FormEvent } from 'react'
+import { useEffect, useState, type FormEvent } from 'react'
 import { useDashboard } from '../../context/DashboardContext'
+import { quickLoginForPartner } from '../../lib/quickLogin'
+import { generateTotp } from '../../lib/totp'
 import { Badge, SectionHeader } from '../ui/Shared'
 
 const inputClass =
@@ -34,12 +36,43 @@ export function InternalUserRedirectPanel() {
   const [userId, setUserId] = useState('')
   const [password, setPassword] = useState('')
   const [otp, setOtp] = useState('')
+  const [secondsLeft, setSecondsLeft] = useState<number | null>(null)
   const [inputError, setInputError] = useState<string | null>(null)
   const [resultMessage, setResultMessage] = useState('Waiting.')
   const isInternalUser = authEmail?.toLowerCase().endsWith('@apt.trading') ?? false
+  const savedLogin = quickLoginForPartner(partnerId)
   const selectedPartner = PARTNER_APIS.find((partner) => partner.id === partnerId) ?? PARTNER_APIS[0]
   const apiUrl =
     partnerId === 'custom' ? customUrl.trim() : selectedClientLoginUrl(selectedPartner.apiUrl)
+
+  useEffect(() => {
+    const saved = quickLoginForPartner(partnerId)
+    if (!saved) {
+      setUserId('')
+      setPassword('')
+      setOtp('')
+      setSecondsLeft(null)
+      return
+    }
+
+    let cancelled = false
+    setUserId(saved.userId)
+    setPassword(saved.password)
+
+    const refreshCode = async () => {
+      const next = await generateTotp(saved.totpSecret)
+      if (cancelled) return
+      setOtp(next.code)
+      setSecondsLeft(next.secondsLeft)
+    }
+
+    void refreshCode()
+    const timer = window.setInterval(() => void refreshCode(), 1000)
+    return () => {
+      cancelled = true
+      window.clearInterval(timer)
+    }
+  }, [partnerId])
 
   const validate = (): boolean => {
     if (!isInternalUser) {
@@ -67,11 +100,11 @@ export function InternalUserRedirectPanel() {
   }
 
   const onFollowRedirect = (e: FormEvent<HTMLFormElement>) => {
-    if (!validate()) {
-      e.preventDefault()
-      return
-    }
+    e.preventDefault()
+    if (!validate()) return
+    const form = e.currentTarget
     setResultMessage('Posting form. Browser should leave this page on 302 redirect.')
+    form.submit()
   }
 
   const runInspect = async () => {
@@ -172,8 +205,9 @@ export function InternalUserRedirectPanel() {
             />
           </label>
           <p className="mb-3 text-[11px] text-[var(--text3)]">
-            Login path is <span className="font-mono-dm">{SELECTED_CLIENT_LOGIN_PATH}</span> on the
-            selected partner <span className="font-mono-dm">api_url</span>.
+            {savedLogin
+              ? `Saved login ready. Authenticator code refreshes in ${secondsLeft ?? '—'}s.`
+              : 'No saved login for this partner. Enter the client user, password, and code.'}
           </p>
 
           <div className="grid gap-2 sm:grid-cols-2 lg:grid-cols-3">
